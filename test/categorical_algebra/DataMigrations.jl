@@ -80,6 +80,20 @@ idF = FinFunctor(
 )
 @test ldds == migrate(LabeledDDS{Int}, ldds, idF)
 
+# test on morphisms
+ldds2 = @acset LabeledDDS{Int} begin X=8; 
+  Φ=[2,3,4,5,6,7,8,1]; label=[100,101,102,103,100,101,102,103] 
+end
+f_ldds = homomorphism(ldds2, ldds)
+@test collect((ΔF(f_ldds))[:E]) == [1,2,3,4,1,2,3,4] 
+
+ldds′ = @acset LabeledDDS{Int} begin X=8; 
+  Φ=[2,3,4,5,6,7,8,1]; label=[0,1,2,3,0,1,2,3,] 
+end
+lmap = FinFunction(Dict(0=>100,1=>101,2=>102,3=>103))
+f_ldds′ = homomorphism(ldds′, ldds; type_components=(Label=lmap,))
+@test collect((ΔF(f_ldds′))[:E]) == [1,2,3,4,1,2,3,4] 
+
 # Conjunctive migration
 #----------------------
 

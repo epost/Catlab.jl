@@ -8,8 +8,9 @@ using ...Syntax, ...Present, ...Theories
 using ...Theories: ob, hom, dom, codom, attr
 using ..Categories, ..FinCats, ..Limits, ..Diagrams, ..FinSets, ..CSets
 using ...Graphs, ..FreeDiagrams
-import ..Categories: ob_map, hom_map
+import ..Categories: ob_map, hom_map, do_hom_map
 using ..FinCats: make_map, mapvals
+using ..CSets: type_components
 
 # Data types
 ############
@@ -97,6 +98,8 @@ const DeltaMigration{Dom,Codom} = DataMigration{Dom,Codom,<:DeltaSchemaMigration
 
 DeltaMigration(args...) = DataMigration(args...)::DeltaMigration
 
+do_hom_map(F::DeltaMigration, f::ACSetTransformation{T}) where T = migrate(f, F)
+
 const ConjMigration{Dom,Codom} = DataMigration{Dom,Codom,<:ConjSchemaMigration}
 const GlueMigration{Dom,Codom} = DataMigration{Dom,Codom,<:GlueSchemaMigration}
 const GlucMigration{Dom,Codom} = DataMigration{Dom,Codom,<:GlucSchemaMigration}
@@ -158,6 +161,31 @@ function (::Type{T})(X::ACSet, FOb::AbstractDict, FHom::AbstractDict) where T <:
   Base.depwarn("Data migration constructor is deprecated, use `migrate` instead", :ACSet)
   migrate(T, X, FOb, FHom)
 end
+
+# On morphisms
+
+function migrate(f::TightACSetTransformation, F::DeltaMigration) 
+  d = Dict()
+  for (ob_dom,ob_codom) in F.functor.ob_map
+    if Symbol(ob_codom) ∈ keys(components(f))
+      d[Symbol(ob_dom)] = f[Symbol(ob_codom)]
+    end
+  end
+  TightACSetTransformation(NamedTuple(d), F(dom(f)), F(codom(f)))
+end
+
+function migrate(f::LooseACSetTransformation, F::DeltaMigration) 
+  d, td = Dict(), Dict()
+  for (ob_dom,ob_codom) in F.functor.ob_map
+    if Symbol(ob_codom) ∈ keys(components(f))
+      d[Symbol(ob_dom)] = f[Symbol(ob_codom)]
+    elseif Symbol(ob_codom) ∈ keys(type_components(f))
+      td[(Symbol(ob_dom))] = f[Symbol(ob_codom)]
+    end
+  end
+  LooseACSetTransformation(NamedTuple(d),NamedTuple(td), F(dom(f)), F(codom(f)))
+end
+
 
 # Conjunctive migration
 #----------------------
