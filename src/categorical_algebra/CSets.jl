@@ -27,7 +27,7 @@ import ...Schemas: objects, homs, attrtypes, attrs, ob, hom, dom, codom
 using ...Columns
 import ...Theories: compose, ⋅, id, meet, ∧, join, ∨, top, ⊤, bottom, ⊥
 using ..FreeDiagrams, ..Limits, ..Subobjects, ..FinSets, ..FinCats
-import ..Limits: limit, colimit, universal
+import ..Limits: limit, colimit, universal, factorize
 import ..Subobjects: Subobject, implies, ⟹, subtract, \, negate, ¬, non, ~
 import ..Sets: SetOb, SetFunction, TypeSet
 import ..FinSets: FinSet, FinFunction, FinDomFunction, force, predicate, is_monic, is_epic
@@ -777,6 +777,57 @@ partial_assignments(x::AbstractVector) =
 # FIXME: Should these accessors go elsewhere?
 in_hom(S, c) = [dom(S,f) => f for f in hom(S) if codom(S,f) == c]
 out_hom(S, c) = [f => codom(S,f) for f in hom(S) if dom(S,f) == c]
+
+# Factorization 
+###############
+
+"""    factorize(s::Span; initial=Dict(), single=true, kw...)
+
+Factor a morphism f: A->C by finding a morphism h: B → C such that f=g⋅h.
+
+                                   B
+                                g ↗ ↘ h = ?
+                                A ⟶ C
+                                  f
+
+This function assumes that the general form of factorizing involves creating an
+"initial" dict for homomorphism search. In some categories this may not be the 
+case, which would mean factorize_constraints should actually return a dictionary 
+that gets passed as kwargs to homomorphism search. 
+"""
+function factorize(s::Span; initial=Dict(), single::Bool=true, kw...)
+  f, g = s
+  init = factorize_constraints(f,g; initial=initial)
+  if isnothing(init) return single ? nothing : typeof(f)[] end 
+  search = single ? homomorphism : homomorphisms
+  search(codom(g), codom(f); initial=NamedTuple(init), kw...)
+end
+
+"""
+Use the data of f:A->C and g:A->B to initialize search for Hom(B,C)
+if f(a) = c, then g(a) must equal c. 
+"""
+function factorize_constraints(f::ACSetTransformation{S},
+                               g::ACSetTransformation{S};
+                               initial=Dict()) where S
+  dom(f) == dom(g) || error("f and g are not a span: $jf \n$jg")
+  res = Dict{Symbol, Dict{Int,Int}}()
+  for ob in objects(S)
+    init = haskey(initial, ob) ? initial[ob] : Dict{Int,Int}()
+    for (a, g_a) in enumerate(collect(g[ob]))
+      f_a = f[ob](a)
+      if haskey(init, g_a) 
+        if init[g_a] != f_a
+          return nothing 
+        end 
+      else 
+        init[g_a] = f_a
+      end
+    end
+    res[ob] = init
+  end
+  return res   
+end
 
 # Limits and colimits
 #####################

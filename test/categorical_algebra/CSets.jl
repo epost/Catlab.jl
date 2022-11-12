@@ -98,6 +98,19 @@ h_ = homomorphism(G, I)
 @test !is_monic(h_)
 @test !is_epic(h_)
 
+# Factorizing morphisms 
+#----------------------
+
+p2, p3 = path_graph(Graph, 2), path_graph(Graph, 3)
+loop = apex(terminal(Graph))
+f = CSetTransformation(Graph(2), p3; V=[2,1])
+g1 = CSetTransformation(Graph(2), p2; V=[1,2])
+g2 = CSetTransformation(Graph(2), p2; V=[2,1])
+@test isnothing(factorize(Span(f, g1)))
+@test length(factorize(Span(f, g2); single=false)) == 1
+f2 = homomorphism(Graph(2), loop)
+@test isnothing(factorize(Span(f2, id(Graph(2))); monic=true))
+@test factorize(Span(f2, id(Graph(2)))) == f2
 
 # Limits
 #-------
