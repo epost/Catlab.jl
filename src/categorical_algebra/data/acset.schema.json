@@ -28,18 +28,11 @@
             "items": {
                 "type": "object",
                 "properties": {
-                    "_id": {
-                        "type": "string"
-                    },
                     "name": {
                         "type": "string"
-                    },
-                    "object_type": {
-                         "type": "string"
                     }
                 },
                 "required": [
-                    "_id",
                     "name"
                 ]
             }
