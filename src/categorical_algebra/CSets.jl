@@ -1180,16 +1180,14 @@ Inverse to [`parse_json_acset`](@ref).
 function generate_json_acset(x::ACSet)
   """ Enrich data with object ID and type. 
   The `_id` field specifies the unique identifier for the object. Currently, the unique identifier is the same as the value in the specified `field`. This can be replaced with another function that produces a unique identifier.
-  The `type` field specifies the type of the object. Currently, the type is always Int64 because objects are indices into an array list.
   """
-  function enrich(v::Any, type::AbstractString)
+  function enrich(v)
     rows = Tables.rowtable(v)
-    # nt_with_ind := (ind, namedtuple)
-    map((nt_with_ind) -> merge(nt_with_ind[2], [:_id=>nt_with_ind[1], :type=>type]), enumerate(rows))    
+    map(((ind, nt)) -> merge((_id=ind,), nt), enumerate(rows))    
   end 
 
   ts = tables(x)
-  OrderedDict(k => enrich(v, "Int64") for (k,v) in zip(keys(ts), ts))
+  OrderedDict(k => enrich(v) for (k,v) in zip(keys(ts), ts))
 end
 
 """ Generate JSON Schema for validation for ACSet 
