@@ -1212,6 +1212,11 @@ function parse_json_acset(::Type{T}, input::AbstractDict) where T <: ACSet
   for l ∈ values(input)
     for (i, j) ∈ enumerate(l)
       for (k,v) ∈ j
+        try
+          eltype(out[Symbol(k)])
+        catch 
+          continue
+        end
         vtype = eltype(out[Symbol(k)])
         if !(v isa vtype)
           v = vtype(v)
