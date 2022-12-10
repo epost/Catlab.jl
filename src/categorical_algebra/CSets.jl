@@ -1183,20 +1183,12 @@ function generate_json_acset(x::ACSet)
   """
   function enrich(v)
     rows = Tables.rowtable(v)
-    map(((ind, nt)) -> merge((_id=ind,), nt), enumerate(rows))    
+    map(((ind, nt),) -> merge((_id=ind,), nt), enumerate(rows))    
   end 
 
   ts = tables(x)
   OrderedDict(k => enrich(v) for (k,v) in zip(keys(ts), ts))
 end
-
-""" Generate JSON Schema for validation for ACSet 
-#  TODO
-"""
-
-""" Validate ACSet data against JSON Schema 
-# TODO
-"""
 
 """ Parse JSON-able object or JSON string representing an ACSet.
 
